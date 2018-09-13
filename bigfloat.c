@@ -81,6 +81,38 @@ void add(BigFloat *a, BigFloat *b) {
   }
 }
 
+/*
+ * Subtract b from a and return a new BigFloat as the result.
+ */
+BigFloat *subtract(BigFloat *a, BigFloat *b) {
+  int i;
+  BigFloat *top, *bottom;
+  BigFloat *res = create("0.0");
+  standardizeDecimal(a, b);
+  res->decimal = a->decimal;
+  if (compare(a,b) >= 0) {
+    top = a;
+    bottom = b;
+  } else {
+    top = b;
+    bottom = a;
+    res->negative = 1;
+  }
+  for (i = PRECISION - 1; i >= 0; i--) {
+     if (top->digits[i] < bottom->digits[i]) {
+       top->digits[i - 1]--;
+       res->digits[i] = top->digits[i] + 10 - bottom->digits[i];
+     } else {
+       res->digits[i] = top->digits[i] - bottom->digits[i];
+     }
+  }
+  trailingZeros(a);
+  trailingZeros(b);
+  trailingZeros(res);
+  return res;
+}
+  
+
 BigFloat *multiply(BigFloat *a, BigFloat *b) {
   int i;
   int carry = 0;
@@ -116,7 +148,21 @@ void multiplyLine(BigFloat *a, BigFloat *line, int mult) {
   }
 }
 
-void divide(BigFloat *a, BigFloat *b) {
+BigFloat *divide(BigFloat *a, BigFloat *b) {
+  int i, current;
+  int carry = 0;
+  BigFloat *res = create("0.0");
+  res->decimal = a->decimal;
+  for (i = 0; i < PRECISION; i++) {
+    current = carry * 10 + a->digits[i];
+    if (b->digits[i] != 0) {
+      res->digits[i] = current / b->digits[i];
+      carry = current % b->digits[i];
+    } else {
+      carry = current;
+    }
+  }
+  return res;  
 }
 
 /*
@@ -135,6 +181,28 @@ char equals(BigFloat *a, BigFloat *b) {
       }
       return 1; 
     } else {
+      return 0;
+    }
+  }
+}
+
+/*
+ * Compares two BigFloats so that compare(a, b) > 0 if
+ * a > b and so on with = and <
+ */
+char compare(BigFloat *a, BigFloat *b) {
+  int i;
+  if (a == b) {
+    return 0;
+  } else {
+    if (a->decimal != b->decimal) {
+      return (char) b->decimal - a->decimal;
+    } else {
+      for (i = 0; i < PRECISION; i++) {
+        if (a->digits[i] != b->digits[i]) {
+          return (char) a->digits[i] - b->digits[i];
+        }
+      }
       return 0;
     }
   }

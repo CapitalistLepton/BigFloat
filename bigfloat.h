@@ -16,9 +16,11 @@ void freeBigFloat(BigFloat *);
 void parse(BigFloat *, char *);
 void print(BigFloat *);
 void add(BigFloat *, BigFloat *);
+BigFloat *subtract(BigFloat *, BigFloat *);
 BigFloat *multiply(BigFloat *, BigFloat *);
-void divide(BigFloat *, BigFloat *);
+BigFloat *divide(BigFloat *, BigFloat *);
 char equals(BigFloat *, BigFloat *);
+char compare(BigFloat *, BigFloat *);
 void clear(BigFloat *);
 
 void standardizeDecimal(BigFloat *, BigFloat *);
