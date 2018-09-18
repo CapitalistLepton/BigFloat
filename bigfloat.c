@@ -149,19 +149,27 @@ void multiplyLine(BigFloat *a, BigFloat *line, int mult) {
 }
 
 BigFloat *divide(BigFloat *a, BigFloat *b) {
-  int i, current;
+  int i, counter;
   int carry = 0;
+  int index = 0;
   BigFloat *res = create("0.0");
+  BigFloat *current = create("0.0");
+  current->decimal = 0;
   res->decimal = a->decimal;
+  printf("-------------------------\n");
   for (i = 0; i < PRECISION; i++) {
-    current = carry * 10 + a->digits[i];
-    if (b->digits[i] != 0) {
-      res->digits[i] = current / b->digits[i];
-      carry = current % b->digits[i];
-    } else {
-      carry = current;
+    counter = 0;
+    current->digits[index++] = a->digits[i];
+    current->decimal++;
+    //print(current);
+    while (compare(current, b) >= 0) {
+      current = subtract(current, b);
+      counter++;
     }
+    res->digits[i] = counter;
   }
+  printf("-------------------------\n");
+  trailingZeros(res);
   return res;  
 }
 
@@ -196,7 +204,7 @@ char compare(BigFloat *a, BigFloat *b) {
     return 0;
   } else {
     if (a->decimal != b->decimal) {
-      return (char) b->decimal - a->decimal;
+      return (char) a->decimal - b->decimal;
     } else {
       for (i = 0; i < PRECISION; i++) {
         if (a->digits[i] != b->digits[i]) {
