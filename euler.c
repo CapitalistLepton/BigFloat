@@ -42,6 +42,7 @@ int main() {
   freeBigFloat(fac);
   freeBigFloat(next);
   freeBigFloat(e);
+  freeBigFloat(trueE);
 
   return 0;
 }
