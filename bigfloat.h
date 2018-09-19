@@ -15,11 +15,13 @@ BigFloat *create(char *);
 void freeBigFloat(BigFloat *);
 void parse(BigFloat *, char *);
 void print(BigFloat *);
+void sprint(char *, BigFloat *);
 void add(BigFloat *, BigFloat *, BigFloat *);
 void subtract(BigFloat *, BigFloat *, BigFloat *);
 void multiply(BigFloat *, BigFloat *, BigFloat *);
 void divide(BigFloat *, BigFloat *, BigFloat *);
 char equals(BigFloat *, BigFloat *);
+char equalsUpTo(BigFloat *, BigFloat *, int);
 char compare(BigFloat *, BigFloat *);
 void clear(BigFloat *);
 

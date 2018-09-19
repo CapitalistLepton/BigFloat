@@ -60,6 +60,25 @@ void print(BigFloat *b) {
 }
 
 /*
+ * Prints of the BigFloat to the given char buffer.
+ */
+void sprint(char *out, BigFloat *b) {
+  int i;
+  int index = 0;
+  if (b->negative) {
+    out[index++] = '-';
+  }
+  for (i = 0; i < PRECISION; i++) {
+    if (i == b->decimal) {
+      out[index++] = '.';
+    }
+    out[index++] = b->digits[i] + '0';
+  }
+  out[index] = '\0';
+}
+
+
+/*
  * Adds two BigFloats and puts the result in the first parameter.
  * TODO: work with negative BigFloats
  */
@@ -205,6 +224,27 @@ char equals(BigFloat *a, BigFloat *b) {
         }
       }
       return 1; 
+    } else {
+      return 0;
+    }
+  }
+}
+
+/*
+ * Tests whether or not two BigFloats are equal up to the given decimal place.
+ */
+char equalsUpTo(BigFloat *a, BigFloat *b, int decimal) {
+  int i;
+  if (a == b) {
+    return 1;
+  } else {
+    if (a->decimal == b->decimal && a->negative == b->negative) {
+      for (i = 0; i < a->decimal + decimal; i++) {
+        if (a->digits[i] != b->digits[i]) {
+          return 0;
+        }
+      }
+      return 1;
     } else {
       return 0;
     }
