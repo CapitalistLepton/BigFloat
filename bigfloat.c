@@ -33,11 +33,12 @@ void parse(BigFloat *b, char *str) {
   } else {
     b->negative = 0;
   }
-  for (; i < strlen(str); i++) {
+  for (; i < strlen(str) && index < PRECISION; i++) {
     if (str[i] == '.') {
       b->decimal = (b->negative) ? i - 1 : i;
     } else {
-      b->digits[index++] = str[i] - '0'; }
+      b->digits[index++] = str[i] - '0';
+    }
   }
 }
 
@@ -62,33 +63,39 @@ void print(BigFloat *b) {
  * Adds two BigFloats and puts the result in the first parameter.
  * TODO: work with negative BigFloats
  */
-void add(BigFloat *a, BigFloat *b) {
+void add(BigFloat *a, BigFloat *b, BigFloat *res) {
   int i, result;
   int carry = 0;
   standardizeDecimal(a, b);
+  clear(res);
+  res->decimal = a->decimal;
   for (i = PRECISION - 1; i >= 0; i--) {
     result = carry;
 /*    result += (a->negative) ? -1 * a->digits[i] : a->digits[i];
     result += (b->negative) ? -1 * b->digits[i] : b->digits[i]; */
     result += a->digits[i] + b->digits[i];
     carry = result / 10;
-    a->digits[i] = result % 10;
+    res->digits[i] = result % 10;
   }
   if (carry != 0) {
-    shiftDownBy(a->digits, PRECISION, 1);
-    a->decimal++;
-    a->digits[0] = carry;
+    shiftDownBy(res->digits, PRECISION, 1);
+    res->decimal++;
+    res->digits[0] = carry;
   }
+  trailingZeros(a);
+  trailingZeros(b);
+  trailingZeros(res);
 }
 
 /*
  * Subtract b from a and return a new BigFloat as the result.
  */
-BigFloat *subtract(BigFloat *a, BigFloat *b) {
-  int i;
+void subtract(BigFloat *a, BigFloat *b, BigFloat *res) {
+  int i, result;
+  int carry = 0;
   BigFloat *top, *bottom;
-  BigFloat *res = create("0.0");
   standardizeDecimal(a, b);
+  clear(res);
   res->decimal = a->decimal;
   if (compare(a,b) >= 0) {
     top = a;
@@ -99,25 +106,27 @@ BigFloat *subtract(BigFloat *a, BigFloat *b) {
     res->negative = 1;
   }
   for (i = PRECISION - 1; i >= 0; i--) {
-     if (top->digits[i] < bottom->digits[i]) {
-       top->digits[i - 1]--;
-       res->digits[i] = top->digits[i] + 10 - bottom->digits[i];
+     result = carry + top->digits[i];
+     if (result < bottom->digits[i]) {
+       carry = -1;
+       res->digits[i] = result + 10 - bottom->digits[i];
      } else {
-       res->digits[i] = top->digits[i] - bottom->digits[i];
+       carry = 0;
+       res->digits[i] = result - bottom->digits[i];
      }
   }
   trailingZeros(a);
   trailingZeros(b);
   trailingZeros(res);
-  return res;
 }
   
 
-BigFloat *multiply(BigFloat *a, BigFloat *b) {
+void multiply(BigFloat *a, BigFloat *b, BigFloat *res) {
   int i;
   int carry = 0;
-  BigFloat *res = create("0.0");
   BigFloat *line = create("0.0");
+  BigFloat *temp = create("0.0");
+  clear(res);
   res->decimal = PRECISION;
   line->decimal = PRECISION;
   zerosFirst(a);
@@ -125,7 +134,10 @@ BigFloat *multiply(BigFloat *a, BigFloat *b) {
   for (i = PRECISION - 1; i >= 0; i--) {
     multiplyLine(a, line, b->digits[i]);
     shiftUpBy(line->digits, PRECISION, PRECISION - i);
-    add(res, line);
+    add(res, line, temp);
+    line->decimal = PRECISION;
+    zerosFirst(temp);
+    memcpy(res, temp, sizeof(BigFloat));
   }
   res->decimal -= PRECISION - a->decimal + PRECISION - b->decimal + 1;
   trailingZeros(a);
@@ -134,7 +146,6 @@ BigFloat *multiply(BigFloat *a, BigFloat *b) {
   freeBigFloat(line);
   line = NULL;
   res->negative = ((a->negative || b->negative) && !(a->negative && b->negative)) ? 1 : 0;
-  return res;
 }
 
 void multiplyLine(BigFloat *a, BigFloat *line, int mult) {
@@ -148,29 +159,35 @@ void multiplyLine(BigFloat *a, BigFloat *line, int mult) {
   }
 }
 
-BigFloat *divide(BigFloat *a, BigFloat *b) {
+void divide(BigFloat *a, BigFloat *b, BigFloat *res) {
   int i, counter;
   int carry = 0;
   int index = 0;
-  BigFloat *res = create("0.0");
-  BigFloat *current = create("0.0");
-  current->decimal = 0;
-  res->decimal = a->decimal;
-  printf("-------------------------\n");
-  for (i = 0; i < PRECISION; i++) {
-    counter = 0;
-    current->digits[index++] = a->digits[i];
-    current->decimal++;
-    //print(current);
-    while (compare(current, b) >= 0) {
-      current = subtract(current, b);
-      counter++;
+  clear(res);
+  res->decimal = b->decimal;
+  if (equals(b, res)) { // res == 0 so check if b == 0
+    printf("ERROR: cannot divide by 0\n");
+  } else {
+    BigFloat *current = create("0.0");
+    BigFloat *temp = create("0.0");
+    current->decimal = 0;
+    res->decimal = a->decimal;
+    for (i = 0; i < PRECISION; i++) {
+      counter = 0;
+      current->digits[index++] = a->digits[i];
+      current->decimal++;
+      trailingZeros(current);
+      while (compare(current, b) >= 0) {
+        subtract(current, b, temp);
+        memcpy(current, temp, sizeof(BigFloat));
+        counter++;
+      }
+      res->digits[i] = counter;
     }
-    res->digits[i] = counter;
+    freeBigFloat(temp);
+    freeBigFloat(current);
+    trailingZeros(res);
   }
-  printf("-------------------------\n");
-  trailingZeros(res);
-  return res;  
 }
 
 /*
@@ -235,6 +252,9 @@ void zerosFirst(BigFloat *a) {
 void trailingZeros(BigFloat *a) {
   int i, start;
   for (i = 0; i < PRECISION && !a->digits[i]; i++);
+  if (a->decimal - i < 1) {
+    i = a->decimal - 1;
+  }
   start = i;
   shiftUpBy(a->digits, PRECISION, start);
   a->decimal -= start;
@@ -283,8 +303,10 @@ void shiftUpBy(char *ar, int length, int shift) {
 
 void clear(BigFloat *a) {
   int i;
-  for (i = 0; i < PRECISION; i++) {
-    a->digits[i] = 0;
+  if (a != NULL) {
+    for (i = 0; i < PRECISION; i++) {
+      a->digits[i] = 0;
+    }
   }
 }
 
