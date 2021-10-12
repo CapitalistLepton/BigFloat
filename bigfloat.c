@@ -88,22 +88,40 @@ void add(BigFloat *a, BigFloat *b, BigFloat *res) {
   standardizeDecimal(a, b);
   clear(res);
   res->decimal = a->decimal;
-  for (i = PRECISION - 1; i >= 0; i--) {
-    result = carry;
-/*    result += (a->negative) ? -1 * a->digits[i] : a->digits[i];
-    result += (b->negative) ? -1 * b->digits[i] : b->digits[i]; */
-    result += a->digits[i] + b->digits[i];
-    carry = result / 10;
-    res->digits[i] = result % 10;
+  unsigned char additionType = (a->negative + b->negative);
+  if (additionType != 1)
+  {
+    for (i = PRECISION - 1; i >= 0; i--) {
+      result = carry;
+  /*    result += (a->negative) ? -1 * a->digits[i] : a->digits[i];
+      result += (b->negative) ? -1 * b->digits[i] : b->digits[i]; */
+      result += a->digits[i] + b->digits[i];
+      carry = result / 10;
+      res->digits[i] = result % 10;
+    }
+    if (carry != 0) {
+      shiftDownBy(res->digits, PRECISION, 1);
+      res->decimal++;
+      res->digits[0] = carry;
+    }
+    trailingZeros(a);
+    trailingZeros(b);
+    trailingZeros(res);
+    if (additionType == 2)
+      res->negative = 1;
   }
-  if (carry != 0) {
-    shiftDownBy(res->digits, PRECISION, 1);
-    res->decimal++;
-    res->digits[0] = carry;
+  else if (a->negative)
+  {
+    b->negative = 1;
+    subtract(b, a, res);
+    b->negative = 0;
   }
-  trailingZeros(a);
-  trailingZeros(b);
-  trailingZeros(res);
+  else if (b->negative)
+  {
+    a->negative = 1;
+    subtract(a, b, res);
+    a->negative = 0;
+  }
 }
 
 /*
