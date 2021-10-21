@@ -3,15 +3,17 @@
 
 #define BIGFLOAT_PRECISION 512
 
-typedef struct bigfloat {
-  unsigned char digits[BIGFLOAT_PRECISION];
-  short decimal;
-  unsigned char negative;
+typedef struct bigfloat
+{
+	unsigned char digits[BIGFLOAT_PRECISION];
+	short decimal;
+	unsigned char negative;
 } BigFloat;
 
-enum BigFloatToString {
-  BigFloatStringInt,
-  BigFloatStringDecimal,
+enum BigFloatToString
+{
+	BigFloatStringInt,
+	BigFloatStringDecimal,
 };
 
 BigFloat *BigFloatCreate(char *);
