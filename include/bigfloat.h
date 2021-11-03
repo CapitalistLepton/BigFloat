@@ -2,6 +2,8 @@
 #define BIG_FLOAT_H
 
 #define BIGFLOAT_PRECISION 512
+#define BIGFLOAT_SUCCESS 0
+#define BIGFLOAT_FAILURE 1
 
 typedef struct bigfloat
 {
@@ -19,11 +21,11 @@ enum BigFloatToString
 BigFloat *BigFloatCreate(char *);
 BigFloat *BigFloatCreateFromInt(int);
 void BigFloatFree(BigFloat *);
-void BigFloatParseString(BigFloat *, char *);
+char BigFloatParseString(BigFloat *, char *);
 char *BigFloatToString(BigFloat *, unsigned char);
-void BigFloatAdd(BigFloat *, BigFloat *, BigFloat *);
-void BigFloatSubtract(BigFloat *, BigFloat *, BigFloat *);
-void BigFloatMultiply(BigFloat *, BigFloat *, BigFloat *);
+char BigFloatAdd(BigFloat *, BigFloat *, BigFloat *);
+char BigFloatSubtract(BigFloat *, BigFloat *, BigFloat *);
+char BigFloatMultiply(BigFloat *, BigFloat *, BigFloat *);
 char BigFloatDivide(BigFloat *, BigFloat *, BigFloat *);
 char BigFloatModulo(BigFloat *, BigFloat *, BigFloat *);
 char BigFloatEquals(BigFloat *, BigFloat *);
